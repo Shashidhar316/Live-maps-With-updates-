@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time CO2 Emission Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        #updates {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="updates">Latest Updates: Waiting for updates...</div>
+    <div id="map" style="width: 100%; height: 600px;"></div>
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([20, 0], 2);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+        }).addTo(map);
+
+        // Define initial region data
+        var regions = [
+            { name: "North America", lat: 37.0902, lon: -95.7129, co2: 410, status: "Increasing" },
+            { name: "Europe", lat: 54.5260, lon: 15.2551, co2: 390, status: "Decreasing" },
+            { name: "Asia", lat: 34.0479, lon: 100.6197, co2: 450, status: "Increasing" },
+            { name: "South America", lat: -14.2350, lon: -51.9253, co2: 380, status: "Stable" },
+            { name: "Africa", lat: -8.7832, lon: 34.5085, co2: 360, status: "Stable" },
+            { name: "Oceania", lat: -25.2744, lon: 133.7751, co2: 370, status: "Increasing" }
+        ];
+
+        // Add markers to the map
+        var markers = [];
+        regions.forEach(function(region) {
+            var color = region.status === "Increasing" ? "red" : (region.status === "Decreasing" ? "green" : "blue");
+            var marker = L.circleMarker([region.lat, region.lon], {
+                color: color,
+                radius: 10,
+                fillOpacity: 0.6
+            }).bindPopup(
+                `<b>Region:</b> ${region.name}<br>` +
+                `<b>CO2 Level:</b> ${region.co2} ppm<br>` +
+                `<b>Status:</b> ${region.status}`
+            ).addTo(map);
+            markers.push(marker);
+        });
+
+        // Simulate real-time updates
+        setInterval(function() {
+            var updates = [];
+            regions.forEach(function(region, index) {
+                // Randomly update CO2 levels
+                region.co2 += (Math.random() * 10 - 5).toFixed(2) * 1;
+                region.status = region.co2 > 400 ? "Increasing" : (region.co2 < 380 ? "Decreasing" : "Stable");
+                
+                // Update marker color and popup content
+                var color = region.status === "Increasing" ? "red" : (region.status === "Decreasing" ? "green" : "blue");
+                markers[index].setStyle({ color: color });
+                markers[index].bindPopup(
+                    `<b>Region:</b> ${region.name}<br>` +
+                    `<b>CO2 Level:</b> ${region.co2.toFixed(2)} ppm<br>` +
+                    `<b>Status:</b> ${region.status}`
+                );
+
+                // Add update information
+                updates.push(`${region.name}: ${region.co2.toFixed(2)} ppm (${region.status})`);
+            });
+
+            // Display updates on top of the map
+            document.getElementById('updates').innerHTML = `Latest Updates: ${updates.join(' | ')}`;
+        }, 3000); // Update every 3 seconds
+    </script>
+</body>
+</html>
